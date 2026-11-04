@@ -1,0 +1,133 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Educación Continua · Facultad de Educación · Uniandes</title>
+  <meta name="description" content="Cursos abiertos, programas corporativos a la medida y profesores de Educación Continua de la Facultad de Educación de la Universidad de los Andes.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=IBM+Plex+Mono:ital,wght@0,400;0,500;0,600;0,700;1,400&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="estilos.css">
+</head>
+<body>
+
+<header class="encabezado">
+  <div class="envoltura">
+    <a class="logo" href="#inicio" aria-label="Inicio · Educación Continua, Facultad de Educación"><img class="sello" src="assets/logo-edco-negro.png" alt="Universidad de los Andes · Educación Continua · Facultad de Educación"></a>
+    <button class="menu-btn" aria-expanded="false" aria-controls="nav">Menú</button>
+    <nav class="nav" id="nav" aria-label="Secciones">
+      <a href="#cursos">Cursos abiertos</a>
+      <a href="#corporativos">Corporativos</a>
+      <a href="#profesores">Profesores</a>
+      <a href="#contacto" class="cta">Contáctanos</a>
+    </nav>
+  </div>
+</header>
+
+<main>
+  <section class="portada" id="inicio">
+    <div class="puntos" aria-hidden="true"></div>
+    <div class="envoltura">
+      <div>
+        <svg class="flecha" viewBox="-4 -10 200 48" aria-hidden="true"><path d="M2 32 V6 H180 M168 -4 L182 6 L168 16" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <h1>Educación<br>Continua</h1>
+        <p class="facultad">Facultad de Educación</p>
+        <p class="lema">Formación continua que transforma talento en competitividad y crecimiento sostenible.</p>
+        <div class="acciones">
+          <a class="boton negro" href="#cursos">Ver cursos abiertos</a>
+          <a class="boton" href="#corporativos">Formación para organizaciones</a>
+        </div>
+        <div class="cifras" id="cifras"></div>
+      </div>
+      <div class="arte" id="arte-portada" aria-hidden="true"></div>
+    </div>
+  </section>
+
+  <section class="seccion" id="cursos" aria-labelledby="t-cursos">
+    <div class="envoltura">
+      <div class="titulo-seccion">
+        <div>
+          <p class="eti">Oferta abierta</p>
+          <h2 id="t-cursos">Cursos abiertos</h2>
+        </div>
+        <span class="banda">Nuestros cursos <b>planificados</b></span>
+      </div>
+
+      <div class="filtros">
+        <div class="chips" id="filtro-area" role="group" aria-label="Filtrar por área"></div>
+        <div class="fila-filtros">
+          <label class="sr" for="buscar">Buscar curso</label>
+          <input class="campo" id="buscar" type="search" placeholder="Buscar por nombre, tema o profesor…" autocomplete="off">
+          <label class="sr" for="filtro-tipo">Tipo de programa</label>
+          <select class="campo" id="filtro-tipo"><option value="">Todos los formatos</option></select>
+          <label class="sr" for="filtro-estado">Estado</label>
+          <select class="campo" id="filtro-estado">
+            <option value="">Cualquier estado</option>
+            <option value="abierto">Inscripciones abiertas</option>
+            <option value="proximamente">Próximamente</option>
+            <option value="desarrollo">En desarrollo</option>
+          </select>
+          <span class="conteo" id="conteo" aria-live="polite"></span>
+        </div>
+      </div>
+
+      <div class="rejilla" id="rejilla-cursos"></div>
+    </div>
+  </section>
+
+  <section class="seccion alt" id="corporativos" aria-labelledby="t-corp">
+    <div class="envoltura">
+      <div class="titulo-seccion">
+        <div>
+          <p class="eti">A la medida de su organización</p>
+          <h2 id="t-corp">Cursos corporativos</h2>
+        </div>
+        <span class="banda">Aprendizaje aplicado para <b>liderar, innovar y crecer</b></span>
+      </div>
+      <div class="corp-intro" id="corp-intro"></div>
+      <div class="casos" id="casos"></div>
+      <div class="cta-corp">
+        <p>¿Su organización necesita un programa a la medida?</p>
+        <a class="boton negro" id="wa-corp" target="_blank" rel="noopener">Hablemos por WhatsApp</a>
+      </div>
+    </div>
+  </section>
+
+  <section class="seccion" id="profesores" aria-labelledby="t-profes">
+    <div class="envoltura">
+      <div class="titulo-seccion">
+        <div>
+          <p class="eti">Quiénes enseñan</p>
+          <h2 id="t-profes">Profesores</h2>
+        </div>
+        <p class="desc">Investigadores y formadores con trayectoria en educación, psicología, política educativa e innovación pedagógica.</p>
+      </div>
+      <div class="profes" id="rejilla-profes"></div>
+    </div>
+  </section>
+</main>
+
+<footer class="contacto" id="contacto">
+  <div class="topo-fondo" id="topo-contacto" aria-hidden="true"></div>
+  <div class="envoltura">
+    <div class="rejilla-contacto">
+      <div>
+        <h2>Contáctanos</h2>
+        <p>Resolvemos dudas sobre cursos abiertos, inscripciones y diseño de programas corporativos.</p>
+      </div>
+      <div class="acciones" id="acciones-contacto"></div>
+    </div>
+    <div class="pie-legal">
+      <img class="sello" src="assets/logo-edco-blanco.png" alt="Universidad de los Andes · Educación Continua · Facultad de Educación">
+      <small>Educación Continua · Facultad de Educación · Universidad de los Andes</small>
+    </div>
+  </div>
+</footer>
+
+<dialog id="dlg" aria-labelledby="dlg-titulo"></dialog>
+
+<script src="datos.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
