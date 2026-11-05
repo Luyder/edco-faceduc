@@ -8,10 +8,10 @@
   const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
   const slug = (s) => String(s || "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 60);
 
-  const TIPOS = ["Curso", "Taller", "Programa", "Certificado profesional", "Certificado de competencias"];
-  const ESTADOS = { abierto: "Inscripciones abiertas", proximamente: "Próximamente", desarrollo: "En desarrollo" };
-  const MODALIDADES = ["Virtual", "Presencial", "Blended", "Híbrida"];
-  const CAMPOS_CURSO = ["id", "oculto", "imagen", "titulo", "slug", "tipo", "area", "estado", "modalidad", "horas", "sesiones", "semanas", "horario", "fechas", "programa", "profesores", "insignia", "descripcion", "competencia"];
+  const TIPOS = ["Curso", "Taller", "Programa", "Certificado profesional", "Certificado de competencias", "Diplomado", "Microcredencial", "Materia de posgrado", "Materia de pregrado"];
+  const ESTADOS = { abierto: "Inscripciones abiertas", proximamente: "Próximamente", desarrollo: "En desarrollo", finalizado: "Finalizado" };
+  const MODALIDADES = ["Virtual", "Presencial", "Semipresencial", "Blended", "Híbrida"];
+  const CAMPOS_CURSO = ["id", "oculto", "imagen", "titulo", "slug", "tipo", "area", "estado", "modalidad", "horas", "sesiones", "semanas", "horario", "fechas", "inscripcionHasta", "programa", "profesores", "insignia", "descripcion", "competencia"];
   const CAMPOS_PROFE = ["id", "oculto", "imagen", "nombre", "cargo", "nota", "bio"];
 
   const LS = (() => { try { localStorage.setItem("__t", "1"); localStorage.removeItem("__t"); return localStorage; } catch (e) { return null; } })();
@@ -47,7 +47,7 @@
     return "/* Datos del micrositio de Educación Continua — Facultad de Educación, Uniandes.\n" +
       "   Se edita desde admin.html. Si lo editas a mano, conserva el formato JSON.\n\n" +
       "   Cursos: slug = dirección en educacioncontinua.uniandes.edu.co/<slug>/p;\n" +
-      "   estado = abierto | proximamente | desarrollo; area = id de AREAS; profesores = ids. */\n\n" +
+      "   estado = abierto | proximamente | desarrollo | finalizado; area = id de AREAS; profesores = ids. */\n\n" +
       "window.EDCO = " + JSON.stringify(salida, null, 2) + ";\n";
   }
 
@@ -263,6 +263,7 @@
     g.appendChild(campo("Semanas", texto(c.semanas, (v) => { c.semanas = numero(v); }, { tipo: "number", min: 0 })));
     g.appendChild(campo("Horario", texto(c.horario, (v) => { c.horario = v; }, { placeholder: "Lunes y miércoles · 6:00 p. m. – 8:00 p. m." }), null, true));
     g.appendChild(campo("Fechas", texto(c.fechas, (v) => { c.fechas = v; }, { placeholder: "6 de octubre – 24 de noviembre de 2026" }), "Déjalo vacío si aún no hay fechas.", true));
+    g.appendChild(campo("Inscripciones hasta", texto(c.inscripcionHasta, (v) => { c.inscripcionHasta = v; }, { placeholder: "12 de noviembre de 2026" }), null, true));
     f.appendChild(g);
 
     f.insertAdjacentHTML("beforeend", `<p class="ad-seccion">Foto</p>`);

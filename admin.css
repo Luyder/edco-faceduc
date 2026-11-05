@@ -33,6 +33,7 @@ body.admin { background: var(--fondo-alt); }
 .ad-lista .punto { width: 9px; height: 9px; flex: none; border-radius: 50%; background: var(--tinta); outline: 1.5px solid var(--papel); }
 .ad-lista .punto.abierto { background: var(--verde); }
 .ad-lista .punto.desarrollo { background: var(--papel); outline-color: var(--gris); }
+.ad-lista .punto.finalizado { background: var(--linea); outline-color: var(--gris); }
 .ad-lista small { display: block; color: var(--gris); font: 400 11px var(--mono); }
 .ad-lista li button[aria-current="true"] small { color: #bbb; }
 

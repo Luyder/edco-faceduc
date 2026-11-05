@@ -9,8 +9,8 @@
   const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
   const sinTildes = (s) => s.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
 
-  const ESTADOS = { abierto: "Inscripciones abiertas", proximamente: "Próximamente", desarrollo: "En desarrollo" };
-  const ORDEN_ESTADO = { abierto: 0, proximamente: 1, desarrollo: 2 };
+  const ESTADOS = { abierto: "Inscripciones abiertas", proximamente: "Próximamente", desarrollo: "En desarrollo", finalizado: "Finalizado" };
+  const ORDEN_ESTADO = { abierto: 0, proximamente: 1, desarrollo: 2, finalizado: 3 };
   const areaPorId = Object.fromEntries(D.areas.map((a) => [a.id, a]));
   const profePorId = Object.fromEntries(D.profesores.map((p) => [p.id, p]));
   const cursoPorId = Object.fromEntries(D.cursos.map((c) => [c.id, c]));
@@ -218,7 +218,8 @@
       ["Semanas", c.semanas],
       ["Modalidad", c.modalidad],
       ["Horario", c.horario],
-      ["Fechas", c.fechas]
+      ["Fechas", c.fechas],
+      ["Inscripciones hasta", c.inscripcionHasta]
     ].filter(([, v]) => v);
     const programa = c.programa && cursoPorId[c.programa];
     const partes = partesDe(c.id);
@@ -242,7 +243,7 @@
         ${profes.length ? `<div class="bloque-dlg"><h3>Profesores</h3><div class="lista-enlaces">${profes.map((p) => `<button class="enlace-chip" data-profe="${p.id}">${esc(p.nombre)}</button>`).join("")}</div></div>` : ""}
         ${/^https:\/\//.test(c.insignia || "") ? `<p class="bloque-dlg"><a href="${esc(c.insignia)}" target="_blank" rel="noopener">Ver la insignia digital que obtendrás ↗</a></p>` : ""}
         <div class="dlg-acciones">
-          <a class="boton negro" href="${urlInfo(c)}" target="_blank" rel="noopener">Más información e inscripciones ${ICONO_FLECHA}</a>
+          <a class="boton negro" href="${urlInfo(c)}" target="_blank" rel="noopener">${c.estado === "abierto" ? "Más información e inscripciones" : "Más información"} ${ICONO_FLECHA}</a>
           <a class="boton" href="${urlWhatsapp(`Hola, me interesa: ${c.titulo}`)}" target="_blank" rel="noopener">${ICONO_WA} Preguntar por WhatsApp</a>
         </div>
       </div>`, `#curso/${c.id}`, "#cursos");
