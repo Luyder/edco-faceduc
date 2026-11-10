@@ -22,6 +22,7 @@
 <div class="ad-barra" id="barra">
   <span class="ad-estado" id="estado">Sin cambios</span>
   <span class="ad-modo" id="modo"></span>
+  <button class="boton" id="sincronizar" title="Copia al sitio los cursos del portal de Educación Continua">↻ Actualizar desde el portal</button>
   <button class="boton" id="descartar" hidden>Descartar cambios</button>
   <button class="boton negro" id="guardar">Publicar</button>
 </div>
@@ -80,7 +81,10 @@
 
 <div class="ad-toast" id="toast" role="status" hidden></div>
 
+<dialog id="informe" class="ad-informe" aria-labelledby="informe-titulo"></dialog>
+
 <script src="datos.js"></script>
+<script src="formato-datos.js"></script>
 <script src="admin.js"></script>
 </body>
 </html>

@@ -1,0 +1,40 @@
+# Copia al sitio los cursos del portal de Educación Continua de Uniandes.
+# Se ejecuta con el botón «Actualizar desde el portal» del editor (admin.html)
+# o desde la pestaña Actions de GitHub ▸ «Sincronizar con el portal» ▸ Run workflow.
+name: Sincronizar con el portal
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: sincronizar-portal
+  cancel-in-progress: false
+
+jobs:
+  sincronizar:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Leer el portal y actualizar datos.js
+        run: node herramientas/sincronizar-portal.mjs
+
+      - name: Guardar los cambios
+        run: |
+          if [ -z "$(git status --porcelain -- datos.js assets)" ]; then
+            echo "Sin cambios: el sitio ya estaba al día con el portal."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add datos.js assets
+          git commit -m "Sincroniza cursos con el portal de Educación Continua"
+          git push

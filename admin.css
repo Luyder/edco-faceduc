@@ -88,3 +88,14 @@ body.admin { background: var(--fondo-alt); }
 
 /* Fecha de noticias: misma altura que los demás campos */
 .ad-campo input[type="date"].campo { height: 48px; line-height: 1.2; }
+
+/* Actualizar desde el portal */
+.ad-barra #sincronizar { margin-left: 0; }
+.ad-manual { align-items: flex-start; margin: -8px 0 20px; padding: 12px 14px; background: var(--fondo-alt); border: 1.5px dashed var(--linea); font-size: 13px; line-height: 1.45; }
+.ad-manual input { margin-top: 3px; flex: none; }
+.ad-informe { width: min(640px, calc(100% - 32px)); }
+.ad-informe .dlg-cab h2 { margin: 0; }
+.ad-informe h3 { font: 600 12px var(--mono); letter-spacing: .16em; text-transform: uppercase; margin: 20px 0 8px; }
+.ad-informe ul { margin: 0; padding-left: 20px; font-size: 14px; }
+.ad-informe li { margin-bottom: 4px; }
+.ad-nota { font-size: 13px; color: var(--gris); margin: 4px 0 8px; }

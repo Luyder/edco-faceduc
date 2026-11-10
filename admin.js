@@ -11,9 +11,7 @@
   const TIPOS = ["Curso", "Taller", "Programa", "Certificado profesional", "Certificado de competencias", "Diplomado", "Microcredencial", "Materia de posgrado", "Materia de pregrado"];
   const ESTADOS = { abierto: "Inscripciones abiertas", proximamente: "Próximamente", desarrollo: "En desarrollo", finalizado: "Finalizado" };
   const MODALIDADES = ["Virtual", "Presencial", "Semipresencial", "Blended", "Híbrida"];
-  const CAMPOS_CURSO = ["id", "oculto", "imagen", "titulo", "slug", "tipo", "area", "estado", "modalidad", "horas", "sesiones", "semanas", "horario", "fechas", "inscripcionHasta", "programa", "profesores", "insignia", "descripcion", "competencia"];
-  const CAMPOS_PROFE = ["id", "oculto", "imagen", "nombre", "cargo", "nota", "bio"];
-  const CAMPOS_NOTICIA = ["id", "oculto", "fecha", "categoria", "titulo", "imagen", "resumen", "contenido", "cursos", "enlace", "enlaceTexto"];
+  const { generar, leer } = window.EDCO_FORMATO;
   const CATEGORIAS = ["Anuncio", "Convocatoria", "Evento", "Logro", "Alianza", "Prensa"];
   const PREFIJO = { "c:": "cursos", "p:": "profes", "n:": "noticias" };
   const HASH = { "c:": "curso", "p:": "profesor", "n:": "noticia" };
@@ -39,32 +37,6 @@
 
   function idsGuardados() {
     return new Set([...D.cursos.map((c) => "c:" + c.id), ...D.profesores.map((p) => "p:" + p.id), ...D.noticias.map((n) => "n:" + n.id)]);
-  }
-
-  /* ---------- Generar datos.js ---------- */
-  function limpiar(o, campos) {
-    const r = {};
-    campos.forEach((k) => {
-      let v = o[k];
-      if (Array.isArray(v)) { if (k === "descripcion" || k === "contenido" || v.length || k === "profesores") r[k] = v; return; }
-      if (v === "" || v == null || v === false) return;
-      r[k] = v;
-    });
-    Object.keys(o).forEach((k) => { if (!campos.includes(k) && !k.startsWith("__") && o[k] !== "" && o[k] != null) r[k] = o[k]; });
-    return r;
-  }
-  function generar(d) {
-    const salida = Object.assign({}, d, {
-      cursos: d.cursos.map((c) => limpiar(c, CAMPOS_CURSO)),
-      profesores: d.profesores.map((p) => limpiar(p, CAMPOS_PROFE)),
-      noticias: d.noticias.map((n) => limpiar(n, CAMPOS_NOTICIA))
-    });
-    return "/* Datos del micrositio de Educación Continua — Facultad de Educación, Uniandes.\n" +
-      "   Se edita desde admin.html. Si lo editas a mano, conserva el formato JSON.\n\n" +
-      "   Cursos: slug = dirección en educacioncontinua.uniandes.edu.co/<slug>/p;\n" +
-      "   estado = abierto | proximamente | desarrollo | finalizado; area = id de AREAS; profesores = ids.\n" +
-      "   Noticias: fecha = AAAA-MM-DD; cursos = ids de cursos relacionados. */\n\n" +
-      "window.EDCO = " + JSON.stringify(salida, null, 2) + ";\n";
   }
 
   /* ---------- Estado de la barra ---------- */
@@ -258,7 +230,7 @@
       <li class="${c.oculto ? "oculto" : ""}"><button data-id="${esc(c.id)}" aria-current="${c.id === sel.cursos}">
         ${c.imagen ? `<img class="mini" src="${esc(fotoUrl(c.imagen))}" alt="">` : `<span class="mini"></span>`}
         <span><span class="punto ${esc(c.estado)}" style="display:inline-block;margin-right:6px"></span>${esc(c.titulo || "(sin título)")}
-        <small>${c.oculto ? "OCULTO · " : ""}${esc(c.tipo)} · ${esc(ESTADOS[c.estado] || "")}</small></span>
+        <small>${c.oculto ? "OCULTO · " : ""}${c.manual ? "MANUAL · " : ""}${esc(c.tipo)} · ${esc(ESTADOS[c.estado] || "")}</small></span>
       </button></li>`).join("") || `<li class="ad-vacio">Sin resultados</li>`;
   }
 
@@ -274,6 +246,14 @@
       D.cursos.splice(D.cursos.indexOf(c) + 1, 0, copia);
       sel.cursos = copia.id; cambio(); pintarForms();
     }));
+
+    if (c.slug) {
+      const m = document.createElement("label");
+      m.className = "ad-check ad-manual";
+      m.innerHTML = `<input type="checkbox" ${c.manual ? "checked" : ""}> <span><b>No actualizar desde el portal.</b> Marca esta casilla si cambiaste a mano datos que vienen del portal (título, estado, fechas, descripción…) y no quieres que «Actualizar desde el portal» los reemplace.</span>`;
+      m.querySelector("input").addEventListener("change", (e) => { c.manual = e.target.checked; cambio(); });
+      f.appendChild(m);
+    }
 
     const g = document.createElement("div");
     g.className = "ad-rejilla";
@@ -504,7 +484,7 @@
       <ol>
         <li>Entra a GitHub ▸ <b>Settings</b> ▸ <b>Developer settings</b> ▸ <b>Personal access tokens</b> ▸ <b>Fine-grained tokens</b> ▸ <b>Generate new token</b>.</li>
         <li>En <b>Repository access</b> elige <b>Only select repositories</b> y marca el repositorio del sitio.</li>
-        <li>En <b>Permissions ▸ Contents</b> elige <b>Read and write</b>. Crea el token y pégalo abajo.</li>
+        <li>En <b>Permissions</b> elige <b>Contents: Read and write</b> (para publicar) y <b>Actions: Read and write</b> (para el botón «Actualizar desde el portal»). Crea el token y pégalo abajo.</li>
       </ol>`;
     const g = document.createElement("div");
     g.className = "ad-rejilla";
@@ -546,10 +526,33 @@
     const pre = gh.folder ? gh.folder.replace(/^\/+|\/+$/g, "") + "/" : "";
     return (pre + ruta).split("/").map(encodeURIComponent).join("/");
   }
-  function ghFetch(ruta, opc = {}) {
+  function ghApi(ruta, opc = {}) {
     opc.headers = Object.assign({ Authorization: "Bearer " + gh.token, Accept: "application/vnd.github+json", "X-GitHub-Api-Version": "2022-11-28" }, opc.headers || {});
     opc.cache = "no-store";
-    return fetch(`https://api.github.com/repos/${encodeURIComponent(gh.owner)}/${encodeURIComponent(gh.repo)}/contents/${ruta}`, opc);
+    return fetch(`https://api.github.com/repos/${encodeURIComponent(gh.owner)}/${encodeURIComponent(gh.repo)}/${ruta}`, opc);
+  }
+  const ghFetch = (ruta, opc) => ghApi("contents/" + ruta, opc);
+
+  function textoB64(b64) {
+    const bin = atob(String(b64).replace(/\s/g, ""));
+    return new TextDecoder().decode(Uint8Array.from(bin, (ch) => ch.charCodeAt(0)));
+  }
+  /* Lee datos.js directamente del repositorio (siempre la última versión, sin la caché de GitHub Pages). */
+  async function datosRemotos() {
+    const res = await ghFetch(rutaRepo("datos.js") + "?ref=" + encodeURIComponent(gh.branch || "main"));
+    if (!res.ok) throw new Error(mensajeGh(res.status, "datos.js"));
+    const j = await res.json();
+    return { sha: j.sha, datos: leer(textoB64(j.content)) };
+  }
+  function reemplazarDatos(nuevo) {
+    nuevo.noticias = nuevo.noticias || [];
+    publicado = clone(nuevo);
+    D = clone(nuevo);
+    base = generar(D);
+    guardados = idsGuardados();
+    pendientes = {};
+    sel = seleccionInicial();
+    cambio(); pintarForms();
   }
   function mensajeGh(status, archivo) {
     if (status === 401) return "el token no es válido o venció";
@@ -576,9 +579,15 @@
     const rama = gh.branch || "main";
     for (const a of archivos()) {
       const ruta = rutaRepo(a.ruta);
-      const leer = await ghFetch(ruta + "?ref=" + encodeURIComponent(rama));
-      if (!leer.ok && (leer.status !== 404 || a.ruta === "datos.js")) throw new Error(mensajeGh(leer.status, a.ruta));
-      const actual = leer.ok ? await leer.json() : null;
+      const lectura = await ghFetch(ruta + "?ref=" + encodeURIComponent(rama));
+      if (!lectura.ok && (lectura.status !== 404 || a.ruta === "datos.js")) throw new Error(mensajeGh(lectura.status, a.ruta));
+      const actual = lectura.ok ? await lectura.json() : null;
+      // Si datos.js cambió en GitHub después de abrir el editor (otra persona o «Actualizar desde el portal»),
+      // publicar ahora reemplazaría esos cambios: se pide confirmación.
+      if (a.ruta === "datos.js" && actual?.content && generar(leer(textoB64(actual.content))) !== generar(publicado) &&
+          !confirm("El sitio cambió en GitHub después de que abriste el editor (por ejemplo, por «Actualizar desde el portal» o porque otra persona publicó).\n\nSi publicas ahora, esos cambios se perderán. Lo recomendable es Cancelar, anotar tus cambios, recargar el editor y volver a hacerlos.\n\n¿Publicar de todas formas?")) {
+        throw new Error("publicación cancelada; recarga el editor para ver la versión más reciente");
+      }
       const res = await ghFetch(ruta, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
@@ -608,6 +617,90 @@
     pendientes = {};
     cambio(); pintarForms();
   }
+
+  /* ---------- Actualizar desde el portal ---------- */
+  // El portal no permite que un navegador lea su API desde otro sitio, así que la copia la hace
+  // la GitHub Action «Sincronizar con el portal» (.github/workflows/sincronizar-portal.yml).
+  const FLUJO = "sincronizar-portal.yml";
+  const espera = (ms) => new Promise((r) => setTimeout(r, ms));
+  const urlAcciones = () => `https://github.com/${gh.owner}/${gh.repo}/actions/workflows/${FLUJO}`;
+  function mensajeAccion(status) {
+    if (status === 401) return "el token no es válido o venció";
+    if (status === 403) return "el token no tiene el permiso «Actions: Read and write» (revisa la pestaña Conexión con GitHub)";
+    if (status === 404) return "no se encontró la acción «Sincronizar con el portal» en el repositorio";
+    return `GitHub respondió ${status}`;
+  }
+  async function ejecuciones(rama) {
+    const r = await ghApi(`actions/workflows/${FLUJO}/runs?event=workflow_dispatch&branch=${encodeURIComponent(rama)}&per_page=10`);
+    if (!r.ok) throw new Error(mensajeAccion(r.status));
+    return (await r.json()).workflow_runs || [];
+  }
+
+  async function sincronizarPortal() {
+    if (!ghListo()) {
+      informe("Actualizar desde el portal", `<p>Para usar este botón, primero configura la pestaña <b>Conexión con GitHub</b> con un token que tenga los permisos <b>Contents</b> y <b>Actions</b> (lectura y escritura).</p>
+        ${gh.owner && gh.repo ? `<p>También puedes ejecutar la actualización directamente en GitHub: abre <a href="${esc(urlAcciones())}" target="_blank" rel="noopener">Sincronizar con el portal</a> y pulsa <b>Run workflow</b>. Después recarga este editor.</p>` : ""}`);
+      return;
+    }
+    if (sucio()) { aviso("Primero publica o descarta tus cambios; luego actualiza desde el portal.", true); return; }
+    const b = $("#sincronizar");
+    const rama = gh.branch || "main";
+    b.disabled = true; $("#guardar").disabled = true;
+    const paso = (t) => { b.textContent = t; };
+    try {
+      paso("Iniciando…");
+      const previas = new Set((await ejecuciones(rama)).map((x) => x.id));
+      const r = await ghApi(`actions/workflows/${FLUJO}/dispatches`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ ref: rama }) });
+      if (r.status !== 204) throw new Error(mensajeAccion(r.status));
+      const inicio = Date.now();
+      let run = null;
+      while (Date.now() - inicio < 6 * 60 * 1000) {
+        await espera(4000);
+        run = (await ejecuciones(rama)).find((x) => !previas.has(x.id)) || null;
+        const s = Math.round((Date.now() - inicio) / 1000);
+        paso(run ? `Leyendo el portal… ${s} s` : `En cola… ${s} s`);
+        if (run?.status === "completed") break;
+      }
+      if (!run || run.status !== "completed") throw new Error(`la actualización está tardando más de lo normal. Revisa su estado en GitHub: ${run?.html_url || urlAcciones()}`);
+      if (run.conclusion !== "success") throw new Error(`la actualización falló en GitHub. Detalles: ${run.html_url}`);
+      paso("Cargando…");
+      const antes = clone(publicado);
+      reemplazarDatos((await datosRemotos()).datos);
+      mostrarInforme(antes, D, run.html_url);
+    } catch (e) {
+      aviso("No se pudo actualizar desde el portal: " + e.message, true);
+    } finally {
+      b.disabled = false; b.textContent = "↻ Actualizar desde el portal";
+      cambio();
+    }
+  }
+
+  function mostrarInforme(antes, ahora, url) {
+    const previo = Object.fromEntries(antes.cursos.map((c) => [c.id, c]));
+    const nuevos = ahora.cursos.filter((c) => !previo[c.id]);
+    // Compara solo el contenido: ignora el orden de los campos y los campos vacíos.
+    const canon = (o) => JSON.stringify(Object.keys(o).sort().filter((k) => o[k] !== "" && o[k] != null && o[k] !== false).map((k) => [k, o[k]]));
+    const cambiados = ahora.cursos.filter((c) => previo[c.id] && canon(previo[c.id]) !== canon(c));
+    const idsProfes = new Set(antes.profesores.map((p) => p.id));
+    const profes = ahora.profesores.filter((p) => !idsProfes.has(p.id));
+    const lista = (t, xs, nota = "") => xs.length ? `<h3>${t} (${xs.length})</h3>${nota}<ul>${xs.map((x) => `<li>${esc(x)}</li>`).join("")}</ul>` : "";
+    const nada = !nuevos.length && !cambiados.length && !profes.length;
+    informe("Actualización desde el portal",
+      (nada ? `<p>Listo: el sitio ya estaba al día con el portal. No hubo cambios.</p>` : `<p>Listo: los cambios del portal ya están publicados en el sitio (se verán en 1–2 minutos).</p>`) +
+      lista("Cursos nuevos", nuevos.map((c) => c.titulo), `<p class="ad-nota">Revisa su <b>área</b> (se propuso una automáticamente) y su foto.</p>`) +
+      lista("Cursos actualizados", cambiados.map((c) => c.titulo)) +
+      lista("Profesores nuevos", profes.map((p) => p.nombre), `<p class="ad-nota">Llegan sin foto ni cargo: complétalos en la pestaña Profesores.</p>`) +
+      `<p class="ad-nota"><a href="${esc(url)}" target="_blank" rel="noopener">Ver el detalle en GitHub ↗</a></p>`);
+  }
+
+  function informe(titulo, html) {
+    const d = $("#informe");
+    d.innerHTML = `<div class="dlg-cab"><h2 id="informe-titulo">${esc(titulo)}</h2><button class="cerrar" type="button" aria-label="Cerrar">×</button></div><div class="dlg-cuerpo">${html}</div>`;
+    d.querySelector(".cerrar").addEventListener("click", () => d.close());
+    d.showModal();
+  }
+  $("#informe").addEventListener("click", (e) => { if (e.target.id === "informe") e.target.close(); });
+  $("#sincronizar").addEventListener("click", sincronizarPortal);
 
   $("#guardar").addEventListener("click", async () => {
     const b = $("#guardar");
@@ -665,4 +758,11 @@
   pintarGitHub();
   modo();
   cambio(); pintarForms();
+  // Con la conexión configurada, se trabaja sobre la última versión del repositorio
+  // (GitHub Pages puede tardar unos minutos en mostrar los cambios recientes).
+  if (ghListo()) {
+    datosRemotos().then(({ datos }) => {
+      if (!sucio() && generar(datos) !== base) { reemplazarDatos(datos); aviso("Se cargó la versión más reciente del sitio desde GitHub."); }
+    }).catch(() => { /* sin conexión: se usa la copia del sitio */ });
+  }
 })();
