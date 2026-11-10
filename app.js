@@ -3,7 +3,10 @@
   // Los cursos y profesores marcados como ocultos en el editor no aparecen en el sitio.
   const D = Object.assign({}, window.EDCO, {
     cursos: window.EDCO.cursos.filter((c) => !c.oculto),
-    profesores: window.EDCO.profesores.filter((p) => !p.oculto)
+    profesores: window.EDCO.profesores.filter((p) => !p.oculto),
+    // Noticias visibles, de la más reciente a la más antigua.
+    noticias: (window.EDCO.noticias || []).filter((n) => !n.oculto && n.titulo)
+      .sort((a, b) => String(b.fecha || "").localeCompare(String(a.fecha || "")))
   });
   const $ = (s, el = document) => el.querySelector(s);
   const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
@@ -14,6 +17,7 @@
   const areaPorId = Object.fromEntries(D.areas.map((a) => [a.id, a]));
   const profePorId = Object.fromEntries(D.profesores.map((p) => [p.id, p]));
   const cursoPorId = Object.fromEntries(D.cursos.map((c) => [c.id, c]));
+  const noticiaPorId = Object.fromEntries(D.noticias.map((n) => [n.id, n]));
   const cursosDe = (profeId) => D.cursos.filter((c) => c.profesores.includes(profeId));
   const partesDe = (progId) => D.cursos.filter((c) => c.programa === progId);
 
@@ -135,6 +139,58 @@
     const t = e.target.closest("[data-curso]");
     if (t) abrirCurso(t.dataset.curso);
   });
+
+  /* ---------- Noticias ---------- */
+  const MESES = ["enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre"];
+  const fechaLarga = (iso) => {
+    const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso || "");
+    return m ? `${+m[3]} de ${MESES[+m[2] - 1]} de ${m[1]}` : (iso || "");
+  };
+  const parrafos = (n) => (Array.isArray(n.contenido) ? n.contenido : [n.contenido]).filter(Boolean);
+  const NOTICIAS_INICIALES = 4;
+  let todasNoticias = false;
+
+  function tarjetaNoticia(n, destacada) {
+    const fecha = n.fecha ? `<time datetime="${esc(n.fecha)}">${esc(fechaLarga(n.fecha))}</time>` : "";
+    return `<button class="noticia${destacada ? " destacada" : ""}" data-noticia="${esc(n.id)}" aria-label="${esc(n.titulo)}: leer noticia completa">
+      <div class="n-foto">${n.imagen ? `<img src="${esc(n.imagen)}" alt="" loading="lazy">` : topo("noticia-" + n.id, { w: 400, h: 240, anillos: 10 })}</div>
+      <div class="n-texto">
+        <p class="n-meta">${n.categoria ? `<span class="n-cat">${esc(n.categoria)}</span>` : ""}${fecha}</p>
+        <h3>${esc(n.titulo)}</h3>
+        ${n.resumen ? `<p class="n-resumen">${esc(n.resumen)}</p>` : ""}
+        <span class="n-leer">Leer noticia ${ICONO_FLECHA}</span>
+      </div>
+    </button>`;
+  }
+
+  function pintarNoticias() {
+    const lista = todasNoticias ? D.noticias : D.noticias.slice(0, NOTICIAS_INICIALES);
+    $("#rejilla-noticias").innerHTML = lista.map((n, i) => tarjetaNoticia(n, i === 0)).join("");
+    // Con solo dos noticias bajo la destacada, se reparten en dos columnas para no dejar un hueco.
+    $("#rejilla-noticias").classList.toggle("dos", lista.length === 3);
+    const mas = D.noticias.length > NOTICIAS_INICIALES;
+    $("#mas-noticias").hidden = !mas;
+    if (mas) {
+      $("#ver-noticias").textContent = todasNoticias ? "Ver menos noticias" : `Ver todas las noticias (${D.noticias.length})`;
+      $("#ver-noticias").setAttribute("aria-expanded", todasNoticias);
+    }
+  }
+  if (D.noticias.length) {
+    pintarNoticias();
+    $("#ver-noticias").addEventListener("click", () => {
+      todasNoticias = !todasNoticias;
+      pintarNoticias();
+      if (!todasNoticias) $("#noticias").scrollIntoView();
+    });
+    $("#rejilla-noticias").addEventListener("click", (e) => {
+      const b = e.target.closest("[data-noticia]");
+      if (b) abrirNoticia(b.dataset.noticia);
+    });
+  } else {
+    // Sin noticias publicadas, la sección y su enlace del menú no se muestran.
+    $("#noticias").hidden = true;
+    $("#nav-noticias").hidden = true;
+  }
 
   /* ---------- Corporativos ---------- */
   const C = D.corporativos;
@@ -266,6 +322,26 @@
       </div>`, `#profesor/${p.id}`, "#profesores");
   }
 
+  function abrirNoticia(id) {
+    const n = noticiaPorId[id];
+    if (!n) return;
+    const relacionados = (n.cursos || []).map((c) => cursoPorId[c]).filter(Boolean);
+    const enlace = /^https?:\/\//.test(n.enlace || "") ? n.enlace : "";
+    mostrar(`
+      <div class="dlg-cab">
+        <span class="tipo">${esc([n.categoria, fechaLarga(n.fecha)].filter(Boolean).join(" · "))}</span>
+        <h2 id="dlg-titulo" tabindex="-1">${esc(n.titulo)}</h2>
+        <button class="cerrar" data-cerrar aria-label="Cerrar">×</button>
+      </div>
+      ${n.imagen ? `<img class="dlg-foto dlg-foto-noticia" src="${esc(n.imagen)}" alt="">` : ""}
+      <div class="dlg-cuerpo dlg-noticia">
+        ${n.resumen ? `<p class="n-entradilla">${esc(n.resumen)}</p>` : ""}
+        <div class="texto">${parrafos(n).map((p) => `<p>${esc(p)}</p>`).join("")}</div>
+        ${relacionados.length ? `<div class="bloque-dlg"><h3>Cursos relacionados</h3><div class="lista-enlaces">${relacionados.map((c) => `<button class="enlace-chip" data-curso="${c.id}">${esc(c.titulo)}</button>`).join("")}</div></div>` : ""}
+        ${enlace ? `<div class="dlg-acciones"><a class="boton negro" href="${esc(enlace)}" target="_blank" rel="noopener">${esc(n.enlaceTexto || "Más información")} ${ICONO_FLECHA}</a></div>` : ""}
+      </div>`, `#noticia/${n.id}`, "#noticias");
+  }
+
   dlg.addEventListener("click", (e) => {
     if (e.target === dlg || e.target.closest("[data-cerrar]")) return dlg.close();
     const c = e.target.closest("[data-curso]");
@@ -279,6 +355,7 @@
     const [tipo, id] = location.hash.slice(1).split("/");
     if (tipo === "curso") abrirCurso(id);
     else if (tipo === "profesor") abrirProfe(id);
+    else if (tipo === "noticia") abrirNoticia(decodeURIComponent(id || ""));
   }
   window.addEventListener("hashchange", desdeHash);
 

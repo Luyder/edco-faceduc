@@ -85,3 +85,6 @@ body.admin { background: var(--fondo-alt); }
 .ad-lista li.oculto button { opacity: .5; }
 .ad-lista li.oculto button[aria-current="true"] { opacity: .75; }
 .ad-oculto { display: inline-block; background: var(--tinta); color: var(--papel); padding: 3px 8px; margin-right: 6px; font-weight: 600; }
+
+/* Fecha de noticias: misma altura que los demás campos */
+.ad-campo input[type="date"].campo { height: 48px; line-height: 1.2; }

@@ -1,4 +1,4 @@
-/* Editor de cursos y profesores de Educación Continua.
+/* Editor de cursos, profesores y noticias de Educación Continua.
    Lee datos.js, edita una copia y publica el nuevo datos.js (y las fotos subidas)
    directamente en el repositorio de GitHub con la API de contenidos.
    Sin token de GitHub, descarga los archivos para subirlos a mano. */
@@ -13,18 +13,32 @@
   const MODALIDADES = ["Virtual", "Presencial", "Semipresencial", "Blended", "Híbrida"];
   const CAMPOS_CURSO = ["id", "oculto", "imagen", "titulo", "slug", "tipo", "area", "estado", "modalidad", "horas", "sesiones", "semanas", "horario", "fechas", "inscripcionHasta", "programa", "profesores", "insignia", "descripcion", "competencia"];
   const CAMPOS_PROFE = ["id", "oculto", "imagen", "nombre", "cargo", "nota", "bio"];
+  const CAMPOS_NOTICIA = ["id", "oculto", "fecha", "categoria", "titulo", "imagen", "resumen", "contenido", "cursos", "enlace", "enlaceTexto"];
+  const CATEGORIAS = ["Anuncio", "Convocatoria", "Evento", "Logro", "Alianza", "Prensa"];
+  const PREFIJO = { "c:": "cursos", "p:": "profes", "n:": "noticias" };
+  const HASH = { "c:": "curso", "p:": "profesor", "n:": "noticia" };
+  const hoy = () => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`; };
 
   const LS = (() => { try { localStorage.setItem("__t", "1"); localStorage.removeItem("__t"); return localStorage; } catch (e) { return null; } })();
 
+  window.EDCO.noticias = window.EDCO.noticias || [];
   let publicado = clone(window.EDCO);
   let D = clone(publicado);
   let base = generar(D);
   let guardados = idsGuardados();
   let pendientes = {};          // ruta → { b64, dataUrl } de fotos subidas sin publicar
-  let sel = { cursos: D.cursos[0]?.id, profes: D.profesores[0]?.id };
+  let sel = seleccionInicial();
+
+  function seleccionInicial() {
+    return { cursos: D.cursos[0]?.id, profes: D.profesores[0]?.id, noticias: noticiasOrdenadas()[0]?.id };
+  }
+  // Las noticias se muestran por fecha (la más reciente primero), igual que en el sitio.
+  function noticiasOrdenadas() {
+    return [...D.noticias].sort((a, b) => String(b.fecha || "").localeCompare(String(a.fecha || "")));
+  }
 
   function idsGuardados() {
-    return new Set([...D.cursos.map((c) => "c:" + c.id), ...D.profesores.map((p) => "p:" + p.id)]);
+    return new Set([...D.cursos.map((c) => "c:" + c.id), ...D.profesores.map((p) => "p:" + p.id), ...D.noticias.map((n) => "n:" + n.id)]);
   }
 
   /* ---------- Generar datos.js ---------- */
@@ -32,7 +46,7 @@
     const r = {};
     campos.forEach((k) => {
       let v = o[k];
-      if (Array.isArray(v)) { if (k === "descripcion" || v.length || k === "profesores") r[k] = v; return; }
+      if (Array.isArray(v)) { if (k === "descripcion" || k === "contenido" || v.length || k === "profesores") r[k] = v; return; }
       if (v === "" || v == null || v === false) return;
       r[k] = v;
     });
@@ -42,12 +56,14 @@
   function generar(d) {
     const salida = Object.assign({}, d, {
       cursos: d.cursos.map((c) => limpiar(c, CAMPOS_CURSO)),
-      profesores: d.profesores.map((p) => limpiar(p, CAMPOS_PROFE))
+      profesores: d.profesores.map((p) => limpiar(p, CAMPOS_PROFE)),
+      noticias: d.noticias.map((n) => limpiar(n, CAMPOS_NOTICIA))
     });
     return "/* Datos del micrositio de Educación Continua — Facultad de Educación, Uniandes.\n" +
       "   Se edita desde admin.html. Si lo editas a mano, conserva el formato JSON.\n\n" +
       "   Cursos: slug = dirección en educacioncontinua.uniandes.edu.co/<slug>/p;\n" +
-      "   estado = abierto | proximamente | desarrollo | finalizado; area = id de AREAS; profesores = ids. */\n\n" +
+      "   estado = abierto | proximamente | desarrollo | finalizado; area = id de AREAS; profesores = ids.\n" +
+      "   Noticias: fecha = AAAA-MM-DD; cursos = ids de cursos relacionados. */\n\n" +
       "window.EDCO = " + JSON.stringify(salida, null, 2) + ";\n";
   }
 
@@ -68,6 +84,13 @@
       if (ids.has("p" + x.id)) p.push(`Identificador repetido: ${x.id}`);
       ids.add("p" + x.id);
     });
+    D.noticias.forEach((n) => {
+      if (!n.titulo?.trim()) p.push("Hay una noticia sin título.");
+      if (ids.has("n" + n.id)) p.push(`Identificador repetido: ${n.id}`);
+      ids.add("n" + n.id);
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(n.fecha || "")) p.push(`La noticia «${n.titulo || "sin título"}» necesita una fecha.`);
+      if (n.enlace && !/^https?:\/\//.test(n.enlace)) p.push(`El enlace de la noticia «${n.titulo}» debe empezar por https://`);
+    });
     return p;
   }
   function cambio(repintarListas = true) {
@@ -77,7 +100,7 @@
     $("#estado").textContent = prob.length ? prob[0] : s ? "Cambios sin publicar" : "Sin cambios";
     $("#guardar").disabled = !s || prob.length > 0;
     $("#descartar").hidden = !s;
-    if (repintarListas) { pintarListaCursos(); pintarListaProfes(); }
+    if (repintarListas) { pintarListaCursos(); pintarListaProfes(); pintarListaNoticias(); }
   }
 
   /* ---------- Utilidades de formulario ---------- */
@@ -165,7 +188,7 @@
     return { dataUrl, b64: dataUrl.split(",")[1], ext: dataUrl.startsWith("data:image/webp") ? "webp" : "jpg" };
   }
 
-  function botonesItem(lista, item, clave, alNuevo) {
+  function botonesItem(lista, item, clave, alNuevo, sinOrden) {
     const caja = document.createElement("div");
     caja.className = "ad-acciones-item";
     const i = lista.indexOf(item);
@@ -176,18 +199,23 @@
       caja.appendChild(x);
       return x;
     };
-    b("↑ Subir", () => { [lista[i - 1], lista[i]] = [lista[i], lista[i - 1]]; cambio(); pintarForms(); }).disabled = i === 0;
-    b("↓ Bajar", () => { [lista[i + 1], lista[i]] = [lista[i], lista[i + 1]]; cambio(); pintarForms(); }).disabled = i === lista.length - 1;
+    if (!sinOrden) {
+      b("↑ Subir", () => { [lista[i - 1], lista[i]] = [lista[i], lista[i - 1]]; cambio(); pintarForms(); }).disabled = i === 0;
+      b("↓ Bajar", () => { [lista[i + 1], lista[i]] = [lista[i], lista[i + 1]]; cambio(); pintarForms(); }).disabled = i === lista.length - 1;
+    }
     b("Duplicar", () => alNuevo(clone(item)));
     b(item.oculto ? "Mostrar en el sitio" : "Ocultar", () => { item.oculto = !item.oculto; cambio(); pintarForms(); }, item.oculto ? "negro" : "");
     b("Eliminar", () => {
       const nombre = item.titulo || item.nombre || "este elemento";
       if (!confirm(`¿Eliminar «${nombre}»? Desaparecerá del sitio al publicar.`)) return;
       lista.splice(i, 1);
-      if (clave === "cursos") D.cursos.forEach((c) => { if (c.programa === item.id) c.programa = ""; });
+      if (clave === "cursos") {
+        D.cursos.forEach((c) => { if (c.programa === item.id) c.programa = ""; });
+        D.noticias.forEach((n) => { if (n.cursos) n.cursos = n.cursos.filter((x) => x !== item.id); });
+      }
       if (clave === "profes") D.cursos.forEach((c) => { c.profesores = c.profesores.filter((p) => p !== item.id); });
       if (item.imagen) delete pendientes[item.imagen];
-      sel[clave] = lista[Math.min(i, lista.length - 1)]?.id;
+      sel[clave] = clave === "noticias" ? noticiasOrdenadas()[0]?.id : lista[Math.min(i, lista.length - 1)]?.id;
       cambio(); pintarForms();
     }, "peligro");
     return caja;
@@ -199,6 +227,7 @@
       if (prefijo === "c:" && c.programa === viejo) c.programa = nuevo;
       if (prefijo === "p:") c.profesores = c.profesores.map((p) => (p === viejo ? nuevo : p));
     });
+    if (prefijo === "c:") D.noticias.forEach((n) => { if (n.cursos) n.cursos = n.cursos.map((x) => (x === viejo ? nuevo : x)); });
   }
   function idUnico(base, lista, propio) {
     let id = base || "nuevo", n = 2;
@@ -211,13 +240,13 @@
       const viejo = item.id;
       item.id = idUnico(slug(v), lista, item); item.__idManual = true;
       renombrar(prefijo, viejo, item.id);
-      sel[prefijo === "c:" ? "cursos" : "profes"] = item.id;
+      sel[PREFIJO[prefijo]] = item.id;
       el.classList.toggle("invalido", !item.id);
     }, { repintar: true });
     i.disabled = fijo;
     i.classList.add("ad-id");
     return campo("Identificador", i, fijo
-      ? "Fijo: se usa en los enlaces directos (…/#" + (prefijo === "c:" ? "curso" : "profesor") + "/" + esc(item.id) + ")."
+      ? "Fijo: se usa en los enlaces directos (…/#" + HASH[prefijo] + "/" + esc(item.id) + ")."
       : "Se genera del " + origen + "; aparece en el enlace directo.");
   }
 
@@ -359,7 +388,95 @@
     $("#form-profe input")?.focus();
   }
 
-  function pintarForms() { pintarFormCurso(); pintarFormProfe(); pintarListaCursos(); pintarListaProfes(); }
+  /* ---------- Noticias ---------- */
+  function pintarListaNoticias() {
+    const q = slug($("#filtro-noticias").value).replace(/-/g, " ");
+    $("#lista-noticias").innerHTML = noticiasOrdenadas().filter((n) => !q || slug(n.titulo).replace(/-/g, " ").includes(q)).map((n) => `
+      <li class="${n.oculto ? "oculto" : ""}"><button data-id="${esc(n.id)}" aria-current="${n.id === sel.noticias}">
+        ${n.imagen ? `<img class="mini" src="${esc(fotoUrl(n.imagen))}" alt="">` : `<span class="mini"></span>`}
+        <span>${esc(n.titulo || "(sin título)")}<small>${n.oculto ? "OCULTA · " : ""}${esc(n.fecha || "sin fecha")}${n.categoria ? " · " + esc(n.categoria) : ""}</small></span>
+      </button></li>`).join("") || `<li class="ad-vacio">${D.noticias.length ? "Sin resultados" : "Aún no hay noticias"}</li>`;
+  }
+
+  function pintarFormNoticia() {
+    const f = $("#form-noticia");
+    const n = D.noticias.find((x) => x.id === sel.noticias);
+    f.innerHTML = "";
+    if (!n) { f.innerHTML = `<p class="ad-vacio">Elige una noticia de la lista o crea una nueva.</p>`; return; }
+    f.insertAdjacentHTML("beforeend", `<h2>${esc(n.titulo || "Nueva noticia")}</h2><p class="sub">${n.oculto ? "<b class=\"ad-oculto\">Oculta: no aparece en el sitio.</b> " : ""}En el sitio se ordenan por fecha: la más reciente aparece destacada.</p>`);
+    f.appendChild(botonesItem(D.noticias, n, "noticias", (copia) => {
+      copia.titulo = (copia.titulo || "") + " (copia)";
+      copia.id = idUnico(slug(copia.titulo), D.noticias); copia.imagen = "";
+      D.noticias.push(copia);
+      sel.noticias = copia.id; cambio(); pintarForms();
+    }, true));
+
+    const g = document.createElement("div");
+    g.className = "ad-rejilla";
+    g.appendChild(campo("Título", texto(n.titulo, (v) => {
+      n.titulo = v;
+      if (!guardados.has("n:" + n.id) && !n.__idManual) { n.id = idUnico(slug(v), D.noticias, n); sel.noticias = n.id; $("#form-noticia .ad-id").value = n.id; }
+      $("#form-noticia h2").textContent = v || "Nueva noticia";
+    }), null, true));
+    g.appendChild(campoId(n, D.noticias, "n:", "título"));
+    g.appendChild(campo("Fecha", texto(n.fecha, (v) => { n.fecha = v; }, { tipo: "date" })));
+    const cat = texto(n.categoria, (v) => { n.categoria = v.trim(); }, { placeholder: "Anuncio" });
+    cat.setAttribute("list", "categorias-noticia");
+    const dl = document.createElement("datalist");
+    dl.id = "categorias-noticia";
+    dl.innerHTML = [...new Set([...CATEGORIAS, ...D.noticias.map((x) => x.categoria).filter(Boolean)])].map((c) => `<option value="${esc(c)}">`).join("");
+    const cc = campo("Categoría", cat, "Elige una o escribe otra.");
+    cc.appendChild(dl);
+    g.appendChild(cc);
+    f.appendChild(g);
+
+    f.insertAdjacentHTML("beforeend", `<p class="ad-seccion">Foto (opcional)</p>`);
+    f.appendChild(bloqueFoto(n, "noticias", false));
+
+    f.insertAdjacentHTML("beforeend", `<p class="ad-seccion">Contenido</p>`);
+    const g2 = document.createElement("div");
+    g2.className = "ad-rejilla";
+    g2.appendChild(campo("Resumen", texto(n.resumen, (v) => { n.resumen = v; }, { area: true, repintar: false }),
+      "Una o dos frases. Se ve en la tarjeta y al inicio de la noticia completa.", true));
+    g2.querySelector("textarea").style.minHeight = "90px";
+    g2.appendChild(campo("Texto completo", texto((n.contenido || []).join("\n\n"), (v) => {
+      n.contenido = v.split(/\n\s*\n/).map((p) => p.trim()).filter(Boolean);
+    }, { area: true, repintar: false }), "Separa los párrafos con una línea en blanco. Se lee en la ventana que se abre al hacer clic.", true));
+    f.appendChild(g2);
+
+    f.insertAdjacentHTML("beforeend", `<p class="ad-seccion">Cursos relacionados (opcional)</p>`);
+    const ch = document.createElement("div");
+    ch.className = "ad-checks";
+    D.cursos.forEach((c) => {
+      const l = document.createElement("label");
+      l.innerHTML = `<input type="checkbox" ${(n.cursos || []).includes(c.id) ? "checked" : ""}> ${esc(c.titulo)}`;
+      l.querySelector("input").addEventListener("change", (e) => {
+        const actuales = n.cursos || [];
+        n.cursos = e.target.checked ? [...actuales, c.id] : actuales.filter((x) => x !== c.id);
+        cambio();
+      });
+      ch.appendChild(l);
+    });
+    f.appendChild(ch);
+
+    f.insertAdjacentHTML("beforeend", `<p class="ad-seccion">Botón con enlace (opcional)</p>`);
+    const g3 = document.createElement("div");
+    g3.className = "ad-rejilla";
+    g3.appendChild(campo("Dirección", texto(n.enlace, (v, el) => { n.enlace = v.trim(); el.classList.toggle("invalido", !!n.enlace && !/^https?:\/\//.test(n.enlace)); }, { tipo: "url", placeholder: "https://…" }), "Por ejemplo, la nota completa en la web de la Universidad o un formulario.", true));
+    g3.appendChild(campo("Texto del botón", texto(n.enlaceTexto, (v) => { n.enlaceTexto = v; }, { placeholder: "Más información" }), null, true));
+    f.appendChild(g3);
+  }
+
+  function nuevaNoticia() {
+    const n = { id: idUnico("nueva-noticia", D.noticias), titulo: "", fecha: hoy(), categoria: "", resumen: "", contenido: [], cursos: [] };
+    D.noticias.push(n);
+    sel.noticias = n.id;
+    $("#filtro-noticias").value = "";
+    cambio(); pintarForms();
+    $("#form-noticia input")?.focus();
+  }
+
+  function pintarForms() { pintarFormCurso(); pintarFormProfe(); pintarFormNoticia(); pintarListaCursos(); pintarListaProfes(); pintarListaNoticias(); }
 
   /* ---------- Conexión con GitHub ---------- */
   function ghInicial() {
@@ -449,7 +566,7 @@
     return btoa(bin);
   }
   function archivos() {
-    const usadas = new Set([...D.cursos, ...D.profesores].map((x) => x.imagen));
+    const usadas = new Set([...D.cursos, ...D.profesores, ...D.noticias].map((x) => x.imagen));
     const lista = Object.entries(pendientes).filter(([r]) => usadas.has(r)).map(([ruta, v]) => ({ ruta, b64: v.b64 }));
     lista.push({ ruta: "datos.js", b64: b64texto(generar(D)) });   // al final: las fotos ya existen cuando el sitio las pide
     return lista;
@@ -484,6 +601,7 @@
   function trasGuardar() {
     D.cursos.forEach((c) => delete c.__idManual);
     D.profesores.forEach((p) => delete p.__idManual);
+    D.noticias.forEach((n) => delete n.__idManual);
     base = generar(D);
     publicado = clone(D);
     guardados = idsGuardados();
@@ -495,7 +613,7 @@
     const b = $("#guardar");
     if (!ghListo()) {
       const fotos = descargar();
-      aviso("Descargado datos.js" + (fotos.length ? ` y ${fotos.length} foto(s); súbelas a assets/cursos o assets/profes` : "") + ". Reemplaza datos.js en el repositorio de GitHub; luego recarga este editor.");
+      aviso("Descargado datos.js" + (fotos.length ? ` y ${fotos.length} foto(s); súbelas a assets/cursos, assets/profes o assets/noticias` : "") + ". Reemplaza datos.js en el repositorio de GitHub; luego recarga este editor.");
       return;
     }
     b.disabled = true; b.textContent = "Publicando…";
@@ -514,7 +632,7 @@
     if (!confirm("¿Descartar todos los cambios sin publicar?")) return;
     D = clone(publicado);
     pendientes = {};
-    sel = { cursos: D.cursos[0]?.id, profes: D.profesores[0]?.id };
+    sel = seleccionInicial();
     cambio(); pintarForms();
   });
 
@@ -531,12 +649,15 @@
     const b = e.target.closest("[data-tab]");
     if (!b) return;
     document.querySelectorAll(".ad-tabs [data-tab]").forEach((x) => x.setAttribute("aria-selected", x === b));
-    ["cursos", "profes", "github"].forEach((t) => { $("#tab-" + t).hidden = t !== b.dataset.tab; });
+    ["cursos", "profes", "noticias", "github"].forEach((t) => { $("#tab-" + t).hidden = t !== b.dataset.tab; });
   });
   $("#lista-cursos").addEventListener("click", (e) => { const b = e.target.closest("[data-id]"); if (b) { sel.cursos = b.dataset.id; pintarFormCurso(); pintarListaCursos(); } });
   $("#lista-profes").addEventListener("click", (e) => { const b = e.target.closest("[data-id]"); if (b) { sel.profes = b.dataset.id; pintarFormProfe(); pintarListaProfes(); } });
   $("#filtro-cursos").addEventListener("input", pintarListaCursos);
   $("#filtro-profes").addEventListener("input", pintarListaProfes);
+  $("#lista-noticias").addEventListener("click", (e) => { const b = e.target.closest("[data-id]"); if (b) { sel.noticias = b.dataset.id; pintarFormNoticia(); pintarListaNoticias(); } });
+  $("#filtro-noticias").addEventListener("input", pintarListaNoticias);
+  $("#nueva-noticia").addEventListener("click", nuevaNoticia);
   $("#nuevo-curso").addEventListener("click", nuevoCurso);
   $("#nuevo-profe").addEventListener("click", nuevoProfe);
   window.addEventListener("beforeunload", (e) => { if (sucio()) { e.preventDefault(); e.returnValue = ""; } });

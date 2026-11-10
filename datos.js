@@ -2,7 +2,8 @@
    Se edita desde admin.html. Si lo editas a mano, conserva el formato JSON.
 
    Cursos: slug = dirección en educacioncontinua.uniandes.edu.co/<slug>/p;
-   estado = abierto | proximamente | desarrollo | finalizado; area = id de AREAS; profesores = ids. */
+   estado = abierto | proximamente | desarrollo | finalizado; area = id de AREAS; profesores = ids.
+   Noticias: fecha = AAAA-MM-DD; cursos = ids de cursos relacionados. */
 
 window.EDCO = {
   "contacto": {
@@ -1772,5 +1773,51 @@ window.EDCO = {
         "cierre": "Su rol trasciende el de expertos y se transforma en el de diseñadores de experiencias educativas, informados por las ciencias del aprendizaje y capaces de ampliar las oportunidades de empleo de las personas."
       }
     ]
-  }
+  },
+  "noticias": [
+    {
+      "id": "oferta-2027-inscripciones-abiertas",
+      "fecha": "2026-11-10",
+      "categoria": "Convocatoria",
+      "titulo": "Abiertas las inscripciones para la oferta 2027",
+      "imagen": "assets/cursos/planificar-clases-de-matematicas-con-inteligencia-artificial.webp",
+      "resumen": "Diplomados, cursos y microcredenciales para docentes, directivos y equipos de formación ya reciben inscripciones para el primer semestre de 2027.",
+      "contenido": [
+        "La Facultad de Educación abrió las inscripciones de su oferta de Educación Continua para 2027. La programación incluye diplomados en educación matemática, cursos sobre inteligencia artificial aplicada a la enseñanza y la investigación, y microcredenciales en gestión de universidades corporativas y mentoría de investigadores.",
+        "El primer programa en comenzar es el diplomado «Planificar clases de matemáticas con inteligencia artificial», que inicia el 3 de febrero de 2027 y recibe inscripciones hasta el 25 de enero.",
+        "Consulta la sección de cursos abiertos para ver fechas, horarios y modalidades de cada programa."
+      ],
+      "cursos": [
+        "planificar-clases-de-matematicas-con-inteligencia-artificial",
+        "inteligencia-artificial-como-apoyo-en-la-investigacion-educa",
+        "gestion-estrategica-de-universidades-corporativas"
+      ]
+    },
+    {
+      "id": "taller-evaluacion-inclusiva-con-iagen",
+      "fecha": "2026-11-06",
+      "categoria": "Evento",
+      "titulo": "Taller: evaluación inclusiva con inteligencia artificial generativa",
+      "imagen": "assets/cursos/evaluacion-inclusiva-con-iagen-impulsa-esfuerzo-y-perseveran.webp",
+      "resumen": "El 17 de noviembre, un taller virtual para diseñar evaluaciones inclusivas que impulsen el esfuerzo y la perseverancia de los estudiantes. Inscripciones hasta el 12 de noviembre.",
+      "contenido": [
+        "El próximo 17 de noviembre se realizará el taller virtual «Evaluación inclusiva con IAGen: impulsa esfuerzo y perseverancia», dirigido a docentes que quieren usar la inteligencia artificial generativa para diseñar evaluaciones más inclusivas.",
+        "Las inscripciones están abiertas hasta el 12 de noviembre de 2026."
+      ],
+      "cursos": [
+        "evaluacion-inclusiva-con-iagen-impulsa-esfuerzo-y-perseveran"
+      ]
+    },
+    {
+      "id": "nuevo-micrositio-educacion-continua",
+      "fecha": "2026-11-05",
+      "categoria": "Anuncio",
+      "titulo": "Estrenamos micrositio de Educación Continua",
+      "resumen": "Un solo lugar para conocer los cursos abiertos, los programas corporativos y los profesores de Educación Continua de la Facultad de Educación.",
+      "contenido": [
+        "Educación Continua de la Facultad de Educación tiene un nuevo micrositio. Aquí puedes explorar los cursos abiertos por área, formato y estado, conocer los casos de formación corporativa que hemos diseñado con distintas organizaciones y consultar el perfil de los profesores.",
+        "Cada curso tiene su ficha con fechas, horarios, profesores y un enlace directo a la inscripción en el portal de la Universidad."
+      ]
+    }
+  ]
 };

@@ -15,7 +15,7 @@
 
 <header class="ad-cab">
   <img src="assets/logo-edco-negro.png" alt="Educación Continua" class="ad-logo">
-  <div class="ad-titulo">Editor de cursos</div>
+  <div class="ad-titulo">Editor del sitio</div>
   <a class="ad-ver" href="index.html" target="_blank" rel="noopener">Ver sitio ↗</a>
 </header>
 
@@ -30,6 +30,7 @@
   <nav class="ad-tabs" role="tablist">
     <button role="tab" data-tab="cursos" aria-selected="true">Cursos</button>
     <button role="tab" data-tab="profes" aria-selected="false">Profesores</button>
+    <button role="tab" data-tab="noticias" aria-selected="false">Noticias</button>
     <button role="tab" data-tab="github" aria-selected="false">Conexión con GitHub</button>
   </nav>
 
@@ -56,6 +57,19 @@
         <ol id="lista-profes"></ol>
       </aside>
       <div class="ad-form" id="form-profe"></div>
+    </div>
+  </section>
+
+  <section class="ad-panel" id="tab-noticias" hidden>
+    <div class="ad-dos">
+      <aside class="ad-lista">
+        <div class="ad-lista-cab">
+          <input class="campo" id="filtro-noticias" type="search" placeholder="Buscar noticia…" aria-label="Buscar noticia">
+          <button class="boton negro" id="nueva-noticia">+ Nueva noticia</button>
+        </div>
+        <ol id="lista-noticias"></ol>
+      </aside>
+      <div class="ad-form" id="form-noticia"></div>
     </div>
   </section>
 
