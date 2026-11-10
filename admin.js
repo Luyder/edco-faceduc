@@ -465,7 +465,7 @@
     if (m) {
       g.owner = m[1];
       const partes = location.pathname.split("/").filter(Boolean);
-      if (partes.length && /\.html?$/.test(partes[partes.length - 1])) partes.pop();
+      if (partes.length && /(\.html?|^admin|^index)$/.test(partes[partes.length - 1])) partes.pop();
       g.repo = partes.shift() || `${m[1]}.github.io`;
       g.folder = partes.join("/");
     }
@@ -485,7 +485,8 @@
         <li>Entra a GitHub ▸ <b>Settings</b> ▸ <b>Developer settings</b> ▸ <b>Personal access tokens</b> ▸ <b>Fine-grained tokens</b> ▸ <b>Generate new token</b>.</li>
         <li>En <b>Repository access</b> elige <b>Only select repositories</b> y marca el repositorio del sitio.</li>
         <li>En <b>Permissions</b> elige <b>Contents: Read and write</b> (para publicar) y <b>Actions: Read and write</b> (para el botón «Actualizar desde el portal»). Crea el token y pégalo abajo.</li>
-      </ol>`;
+      </ol>
+      <p><a href="tutorial-token.html" target="_blank" rel="noopener"><b>Ver el tutorial paso a paso, con imágenes ↗</b></a></p>`;
     const g = document.createElement("div");
     g.className = "ad-rejilla";
     [["owner", "Usuario u organización"], ["repo", "Repositorio"], ["branch", "Rama"], ["folder", "Carpeta dentro del repositorio (vacío = raíz)"]].forEach(([k, t]) => {
@@ -568,16 +569,16 @@
     for (let i = 0; i < bytes.length; i += 0x8000) bin += String.fromCharCode.apply(null, bytes.subarray(i, i + 0x8000));
     return btoa(bin);
   }
-  function archivos() {
-    const usadas = new Set([...D.cursos, ...D.profesores, ...D.noticias].map((x) => x.imagen));
+  function archivos(d = D, texto = generar(d)) {
+    const usadas = new Set([...d.cursos, ...d.profesores, ...d.noticias].map((x) => x.imagen));
     const lista = Object.entries(pendientes).filter(([r]) => usadas.has(r)).map(([ruta, v]) => ({ ruta, b64: v.b64 }));
-    lista.push({ ruta: "datos.js", b64: b64texto(generar(D)) });   // al final: las fotos ya existen cuando el sitio las pide
+    lista.push({ ruta: "datos.js", b64: b64texto(texto) });   // al final: las fotos ya existen cuando el sitio las pide
     return lista;
   }
 
-  async function publicarGitHub() {
+  async function publicarGitHub(lista) {
     const rama = gh.branch || "main";
-    for (const a of archivos()) {
+    for (const a of lista) {
       const ruta = rutaRepo(a.ruta);
       const lectura = await ghFetch(ruta + "?ref=" + encodeURIComponent(rama));
       if (!lectura.ok && (lectura.status !== 404 || a.ruta === "datos.js")) throw new Error(mensajeGh(lectura.status, a.ruta));
@@ -607,14 +608,13 @@
     return fotos;
   }
 
-  function trasGuardar() {
-    D.cursos.forEach((c) => delete c.__idManual);
-    D.profesores.forEach((p) => delete p.__idManual);
-    D.noticias.forEach((n) => delete n.__idManual);
-    base = generar(D);
-    publicado = clone(D);
-    guardados = idsGuardados();
-    pendientes = {};
+  /* Marca como publicado solo lo que se envió: si se editó durante la subida, sigue pendiente. */
+  function trasGuardar(enviado, texto, lista) {
+    [D, enviado].forEach((d) => { d.cursos.forEach((c) => delete c.__idManual); d.profesores.forEach((p) => delete p.__idManual); d.noticias.forEach((n) => delete n.__idManual); });
+    base = texto;
+    publicado = enviado;
+    guardados = new Set([...enviado.cursos.map((c) => "c:" + c.id), ...enviado.profesores.map((p) => "p:" + p.id), ...enviado.noticias.map((n) => "n:" + n.id)]);
+    lista.forEach((a) => { delete pendientes[a.ruta]; });
     cambio(); pintarForms();
   }
 
@@ -710,9 +710,10 @@
       return;
     }
     b.disabled = true; b.textContent = "Publicando…";
+    const enviado = clone(D), texto = generar(enviado), lista = archivos(enviado, texto);
     try {
-      await publicarGitHub();
-      trasGuardar();
+      await publicarGitHub(lista);
+      trasGuardar(enviado, texto, lista);
       aviso("Publicado ✓ El sitio mostrará los cambios en 1–2 minutos.");
     } catch (e) {
       aviso("No se pudo publicar: " + e.message, true);
