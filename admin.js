@@ -518,9 +518,12 @@
   function modo() {
     const m = ghListo() ? "github" : "descarga";
     $("#guardar").textContent = m === "github" ? "Publicar en el sitio" : "Descargar datos.js";
+    // Sin token, el botón principal es «Conectar con GitHub»; «Descargar» queda como alternativa.
+    $("#conectar").hidden = m === "github";
+    $("#guardar").classList.toggle("secundario", m !== "github");
     $("#modo").textContent = m === "github"
       ? `Se publica en ${gh.owner}/${gh.repo}; el sitio se actualiza en 1–2 minutos.`
-      : "Sin conexión con GitHub: se descargarán los archivos para subirlos a mano (o configura la pestaña Conexión con GitHub).";
+      : "Para publicar desde aquí, conecta el editor con GitHub (se hace una sola vez en cada computador).";
   }
 
   function rutaRepo(ruta) {
@@ -739,11 +742,19 @@
   }
 
   /* ---------- Pestañas y listas ---------- */
+  function abrirPestana(tab) {
+    document.querySelectorAll(".ad-tabs [data-tab]").forEach((x) => x.setAttribute("aria-selected", x.dataset.tab === tab));
+    ["cursos", "profes", "noticias", "github"].forEach((t) => { $("#tab-" + t).hidden = t !== tab; });
+  }
   document.querySelector(".ad-tabs").addEventListener("click", (e) => {
     const b = e.target.closest("[data-tab]");
-    if (!b) return;
-    document.querySelectorAll(".ad-tabs [data-tab]").forEach((x) => x.setAttribute("aria-selected", x === b));
-    ["cursos", "profes", "noticias", "github"].forEach((t) => { $("#tab-" + t).hidden = t !== b.dataset.tab; });
+    if (b) abrirPestana(b.dataset.tab);
+  });
+  $("#conectar").addEventListener("click", () => {
+    abrirPestana("github");
+    $("#tab-github").scrollIntoView({ block: "start" });
+    const t = $("#form-github input[type=password]");
+    if (t) { t.focus({ preventScroll: true }); t.classList.add("resaltar"); setTimeout(() => t.classList.remove("resaltar"), 2500); }
   });
   $("#lista-cursos").addEventListener("click", (e) => { const b = e.target.closest("[data-id]"); if (b) { sel.cursos = b.dataset.id; pintarFormCurso(); pintarListaCursos(); } });
   $("#lista-profes").addEventListener("click", (e) => { const b = e.target.closest("[data-id]"); if (b) { sel.profes = b.dataset.id; pintarFormProfe(); pintarListaProfes(); } });
