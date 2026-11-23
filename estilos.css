@@ -107,7 +107,6 @@ button { font: inherit; color: inherit; }
 .seccion.alt { background: var(--fondo-alt); }
 .titulo-seccion { display: flex; align-items: flex-end; justify-content: space-between; gap: 24px; flex-wrap: wrap; margin-bottom: 36px; }
 .titulo-seccion h2 { font: 400 clamp(52px, 7vw, 92px)/.9 var(--display); margin: 0; }
-.titulo-seccion .eti { font: 500 12px/1 var(--mono); letter-spacing: .3em; text-transform: uppercase; color: var(--gris); margin: 0 0 12px; }
 .titulo-seccion p.desc { max-width: 46ch; margin: 0; font: 400 15px/1.6 var(--mono); }
 
 /* Filtros */
@@ -164,7 +163,6 @@ input.campo { flex: 1 1 260px; min-width: 0; }
 .casos { display: grid; gap: 30px; margin-top: 64px; }
 .caso { display: grid; grid-template-columns: 330px 1fr; border: 2px solid var(--tinta); background: var(--papel); }
 .caso .lado { background: var(--tinta); color: var(--papel); padding: 28px; position: relative; overflow: hidden; display: flex; flex-direction: column; }
-.caso .lado .eti { font: 500 11px/1 var(--mono); letter-spacing: .24em; text-transform: uppercase; color: var(--verde); }
 .caso h3 { font: 400 40px/.95 var(--display); margin: 12px 0 18px; position: relative; }
 .caso .cursos-dis { list-style: none; padding: 0; margin: 0 0 22px; position: relative; }
 .caso .cursos-dis li { font: 500 13px/1.45 var(--mono); padding-left: 14px; border-left: 2px solid var(--verde); margin-bottom: 10px; }

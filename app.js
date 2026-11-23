@@ -205,7 +205,6 @@
       <div class="lado">
         ${topo("caso-" + i, { w: 240, h: 240, anillos: 9, radio: 0.55, trazo: "#fff", mancha: false, cx: 120, cy: 120 }).replace("<svg", '<svg class="topo"')}
         ${k.logo ? `<span class="logo-empresa"><img src="${esc(k.logo)}" alt="${esc(k.cliente)}"></span>` : ""}
-        <span class="eti">Curso diseñado para</span>
         <h3>${esc(k.cliente)}</h3>
         <ul class="cursos-dis">${k.cursos.map((c) => `<li>${esc(c)}</li>`).join("")}</ul>
         <a href="${esc(k.web)}" target="_blank" rel="noopener">Conocer la organización ↗</a>
