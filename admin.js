@@ -78,7 +78,7 @@
   /* ---------- Utilidades de formulario ---------- */
   function campo(etiqueta, control, ayuda, ancho) {
     const l = document.createElement("label");
-    l.className = "ad-campo" + (ancho ? " ancho" : "");
+    l.className = "ed-campo" + (ancho ? " ancho" : "");
     l.innerHTML = `<span>${esc(etiqueta)}</span>`;
     l.appendChild(control);
     if (ayuda) l.insertAdjacentHTML("beforeend", `<small>${ayuda}</small>`);
@@ -107,7 +107,7 @@
 
   function bloqueFoto(item, carpeta, cuadrada) {
     const caja = document.createElement("div");
-    caja.className = "ad-foto" + (cuadrada ? " cuadrada" : "");
+    caja.className = "ed-foto" + (cuadrada ? " cuadrada" : "");
     const pintar = () => {
       caja.innerHTML = item.imagen ? `<img src="${esc(fotoUrl(item.imagen))}" alt="">` : `<span class="vacia">Sin foto</span>`;
       const subir = document.createElement("button");
@@ -162,7 +162,7 @@
 
   function botonesItem(lista, item, clave, alNuevo, sinOrden) {
     const caja = document.createElement("div");
-    caja.className = "ad-acciones-item";
+    caja.className = "ed-acciones-item";
     const i = lista.indexOf(item);
     const b = (t, fn, cls = "") => {
       const x = document.createElement("button");
@@ -216,7 +216,7 @@
       el.classList.toggle("invalido", !item.id);
     }, { repintar: true });
     i.disabled = fijo;
-    i.classList.add("ad-id");
+    i.classList.add("ed-id");
     return campo("Identificador", i, fijo
       ? "Fijo: se usa en los enlaces directos (…/#" + HASH[prefijo] + "/" + esc(item.id) + ")."
       : "Se genera del " + origen + "; aparece en el enlace directo.");
@@ -231,15 +231,15 @@
         ${c.imagen ? `<img class="mini" src="${esc(fotoUrl(c.imagen))}" alt="">` : `<span class="mini"></span>`}
         <span><span class="punto ${esc(c.estado)}" style="display:inline-block;margin-right:6px"></span>${esc(c.titulo || "(sin título)")}
         <small>${c.oculto ? "OCULTO · " : ""}${c.manual ? "MANUAL · " : ""}${esc(c.tipo)} · ${esc(ESTADOS[c.estado] || "")}</small></span>
-      </button></li>`).join("") || `<li class="ad-vacio">Sin resultados</li>`;
+      </button></li>`).join("") || `<li class="ed-vacio">Sin resultados</li>`;
   }
 
   function pintarFormCurso() {
     const f = $("#form-curso");
     const c = D.cursos.find((x) => x.id === sel.cursos);
     f.innerHTML = "";
-    if (!c) { f.innerHTML = `<p class="ad-vacio">Elige un curso de la lista o crea uno nuevo.</p>`; return; }
-    f.insertAdjacentHTML("beforeend", `<h2>${esc(c.titulo || "Nuevo curso")}</h2><p class="sub">${c.oculto ? "<b class=\"ad-oculto\">Oculto: no aparece en el sitio.</b> " : ""}Los cambios se ven en el sitio después de publicar.</p>`);
+    if (!c) { f.innerHTML = `<p class="ed-vacio">Elige un curso de la lista o crea uno nuevo.</p>`; return; }
+    f.insertAdjacentHTML("beforeend", `<h2>${esc(c.titulo || "Nuevo curso")}</h2><p class="sub">${c.oculto ? "<b class=\"ed-oculto\">Oculto: no aparece en el sitio.</b> " : ""}Los cambios se ven en el sitio después de publicar.</p>`);
     f.appendChild(botonesItem(D.cursos, c, "cursos", (copia) => {
       copia.titulo = (copia.titulo || "") + " (copia)";
       copia.id = idUnico(slug(copia.titulo), D.cursos); copia.imagen = "";
@@ -249,17 +249,17 @@
 
     if (c.slug) {
       const m = document.createElement("label");
-      m.className = "ad-check ad-manual";
+      m.className = "ed-check ed-manual";
       m.innerHTML = `<input type="checkbox" ${c.manual ? "checked" : ""}> <span><b>No actualizar desde el portal.</b> Marca esta casilla si cambiaste a mano datos que vienen del portal (título, estado, fechas, descripción…) y no quieres que «Actualizar desde el portal» los reemplace.</span>`;
       m.querySelector("input").addEventListener("change", (e) => { c.manual = e.target.checked; cambio(); });
       f.appendChild(m);
     }
 
     const g = document.createElement("div");
-    g.className = "ad-rejilla";
+    g.className = "ed-rejilla";
     g.appendChild(campo("Título", texto(c.titulo, (v) => {
       c.titulo = v;
-      if (!guardados.has("c:" + c.id) && !c.__idManual) { const viejo = c.id; c.id = idUnico(slug(v), D.cursos, c); renombrar("c:", viejo, c.id); sel.cursos = c.id; $("#form-curso .ad-id").value = c.id; }
+      if (!guardados.has("c:" + c.id) && !c.__idManual) { const viejo = c.id; c.id = idUnico(slug(v), D.cursos, c); renombrar("c:", viejo, c.id); sel.cursos = c.id; $("#form-curso .ed-id").value = c.id; }
       $("#form-curso h2").textContent = v || "Nuevo curso";
     }), null, true));
     g.appendChild(campoId(c, D.cursos, "c:", "título"));
@@ -275,21 +275,21 @@
     g.appendChild(campo("Inscripciones hasta", texto(c.inscripcionHasta, (v) => { c.inscripcionHasta = v; }, { placeholder: "12 de noviembre de 2026" }), null, true));
     f.appendChild(g);
 
-    f.insertAdjacentHTML("beforeend", `<p class="ad-seccion">Foto</p>`);
+    f.insertAdjacentHTML("beforeend", `<p class="ed-seccion">Foto</p>`);
     f.appendChild(bloqueFoto(c, "cursos", false));
 
-    f.insertAdjacentHTML("beforeend", `<p class="ad-seccion">Contenido</p>`);
+    f.insertAdjacentHTML("beforeend", `<p class="ed-seccion">Contenido</p>`);
     const g2 = document.createElement("div");
-    g2.className = "ad-rejilla";
+    g2.className = "ed-rejilla";
     g2.appendChild(campo("Descripción", texto(c.descripcion.join("\n\n"), (v) => {
       c.descripcion = v.split(/\n\s*\n/).map((p) => p.trim()).filter(Boolean);
     }, { area: true, repintar: false }), "Separa los párrafos con una línea en blanco.", true));
     g2.appendChild(campo("Competencia (opcional)", texto(c.competencia, (v) => { c.competencia = v; }, { area: true, repintar: false }), null, true));
     f.appendChild(g2);
 
-    f.insertAdjacentHTML("beforeend", `<p class="ad-seccion">Profesores</p>`);
+    f.insertAdjacentHTML("beforeend", `<p class="ed-seccion">Profesores</p>`);
     const ch = document.createElement("div");
-    ch.className = "ad-checks";
+    ch.className = "ed-checks";
     D.profesores.forEach((p) => {
       const l = document.createElement("label");
       l.innerHTML = `<input type="checkbox" ${c.profesores.includes(p.id) ? "checked" : ""}> ${esc(p.nombre)}`;
@@ -301,9 +301,9 @@
     });
     f.appendChild(ch);
 
-    f.insertAdjacentHTML("beforeend", `<p class="ad-seccion">Enlaces</p>`);
+    f.insertAdjacentHTML("beforeend", `<p class="ed-seccion">Enlaces</p>`);
     const g3 = document.createElement("div");
-    g3.className = "ad-rejilla";
+    g3.className = "ed-rejilla";
     const portal = texto(c.slug, (v) => { c.slug = v.trim().replace(/^https?:\/\/educacioncontinua\.uniandes\.edu\.co\//, "").replace(/\/p\/?$/, "").replace(/^\/|\/$/g, ""); });
     g3.appendChild(campo("Página en el portal de Uniandes", portal,
       "Pega la dirección completa o solo la parte final, por ejemplo <code>gamificacion-e-innovacion-educativa</code>. Vacío = lleva a la portada del portal.", true));
@@ -328,26 +328,26 @@
       <li class="${p.oculto ? "oculto" : ""}"><button data-id="${esc(p.id)}" aria-current="${p.id === sel.profes}">
         ${p.imagen ? `<img class="mini" src="${esc(fotoUrl(p.imagen))}" alt="">` : `<span class="mini"></span>`}
         <span>${esc(p.nombre || "(sin nombre)")}<small>${p.oculto ? "OCULTO · " : ""}${esc(p.cargo || "")}</small></span>
-      </button></li>`).join("") || `<li class="ad-vacio">Sin resultados</li>`;
+      </button></li>`).join("") || `<li class="ed-vacio">Sin resultados</li>`;
   }
 
   function pintarFormProfe() {
     const f = $("#form-profe");
     const p = D.profesores.find((x) => x.id === sel.profes);
     f.innerHTML = "";
-    if (!p) { f.innerHTML = `<p class="ad-vacio">Elige un profesor de la lista o crea uno nuevo.</p>`; return; }
+    if (!p) { f.innerHTML = `<p class="ed-vacio">Elige un profesor de la lista o crea uno nuevo.</p>`; return; }
     const cursos = D.cursos.filter((c) => c.profesores.includes(p.id));
-    f.insertAdjacentHTML("beforeend", `<h2>${esc(p.nombre || "Nuevo profesor")}</h2><p class="sub">${p.oculto ? "<b class=\"ad-oculto\">Oculto: no aparece en el sitio.</b> " : ""}${cursos.length ? "Enseña en: " + cursos.map((c) => esc(c.titulo)).join(" · ") : "Asígnalo a sus cursos desde la pestaña Cursos."}</p>`);
+    f.insertAdjacentHTML("beforeend", `<h2>${esc(p.nombre || "Nuevo profesor")}</h2><p class="sub">${p.oculto ? "<b class=\"ed-oculto\">Oculto: no aparece en el sitio.</b> " : ""}${cursos.length ? "Enseña en: " + cursos.map((c) => esc(c.titulo)).join(" · ") : "Asígnalo a sus cursos desde la pestaña Cursos."}</p>`);
     f.appendChild(botonesItem(D.profesores, p, "profes", (copia) => {
       copia.nombre += " (copia)"; copia.id = idUnico(slug(copia.nombre), D.profesores); copia.imagen = "";
       D.profesores.splice(D.profesores.indexOf(p) + 1, 0, copia);
       sel.profes = copia.id; cambio(); pintarForms();
     }));
     const g = document.createElement("div");
-    g.className = "ad-rejilla";
+    g.className = "ed-rejilla";
     g.appendChild(campo("Nombre", texto(p.nombre, (v) => {
       p.nombre = v;
-      if (!guardados.has("p:" + p.id) && !p.__idManual) { const viejo = p.id; p.id = idUnico(slug(v), D.profesores, p); renombrar("p:", viejo, p.id); sel.profes = p.id; $("#form-profe .ad-id").value = p.id; }
+      if (!guardados.has("p:" + p.id) && !p.__idManual) { const viejo = p.id; p.id = idUnico(slug(v), D.profesores, p); renombrar("p:", viejo, p.id); sel.profes = p.id; $("#form-profe .ed-id").value = p.id; }
       $("#form-profe h2").textContent = v || "Nuevo profesor";
     }), null, true));
     g.appendChild(campoId(p, D.profesores, "p:", "nombre"));
@@ -355,7 +355,7 @@
     g.appendChild(campo("Texto si no tiene cursos abiertos (opcional)", texto(p.nota, (v) => { p.nota = v; }, { placeholder: "Cursos corporativos" }), null, true));
     g.appendChild(campo("Biografía", texto(p.bio, (v) => { p.bio = v; }, { area: true, repintar: false }), null, true));
     f.appendChild(g);
-    f.insertAdjacentHTML("beforeend", `<p class="ad-seccion">Foto</p>`);
+    f.insertAdjacentHTML("beforeend", `<p class="ed-seccion">Foto</p>`);
     f.appendChild(bloqueFoto(p, "profes", true));
   }
 
@@ -375,15 +375,15 @@
       <li class="${n.oculto ? "oculto" : ""}"><button data-id="${esc(n.id)}" aria-current="${n.id === sel.noticias}">
         ${n.imagen ? `<img class="mini" src="${esc(fotoUrl(n.imagen))}" alt="">` : `<span class="mini"></span>`}
         <span>${esc(n.titulo || "(sin título)")}<small>${n.oculto ? "OCULTA · " : ""}${esc(n.fecha || "sin fecha")}${n.categoria ? " · " + esc(n.categoria) : ""}</small></span>
-      </button></li>`).join("") || `<li class="ad-vacio">${D.noticias.length ? "Sin resultados" : "Aún no hay noticias"}</li>`;
+      </button></li>`).join("") || `<li class="ed-vacio">${D.noticias.length ? "Sin resultados" : "Aún no hay noticias"}</li>`;
   }
 
   function pintarFormNoticia() {
     const f = $("#form-noticia");
     const n = D.noticias.find((x) => x.id === sel.noticias);
     f.innerHTML = "";
-    if (!n) { f.innerHTML = `<p class="ad-vacio">Elige una noticia de la lista o crea una nueva.</p>`; return; }
-    f.insertAdjacentHTML("beforeend", `<h2>${esc(n.titulo || "Nueva noticia")}</h2><p class="sub">${n.oculto ? "<b class=\"ad-oculto\">Oculta: no aparece en el sitio.</b> " : ""}En el sitio se ordenan por fecha: la más reciente aparece destacada.</p>`);
+    if (!n) { f.innerHTML = `<p class="ed-vacio">Elige una noticia de la lista o crea una nueva.</p>`; return; }
+    f.insertAdjacentHTML("beforeend", `<h2>${esc(n.titulo || "Nueva noticia")}</h2><p class="sub">${n.oculto ? "<b class=\"ed-oculto\">Oculta: no aparece en el sitio.</b> " : ""}En el sitio se ordenan por fecha: la más reciente aparece destacada.</p>`);
     f.appendChild(botonesItem(D.noticias, n, "noticias", (copia) => {
       copia.titulo = (copia.titulo || "") + " (copia)";
       copia.id = idUnico(slug(copia.titulo), D.noticias); copia.imagen = "";
@@ -392,10 +392,10 @@
     }, true));
 
     const g = document.createElement("div");
-    g.className = "ad-rejilla";
+    g.className = "ed-rejilla";
     g.appendChild(campo("Título", texto(n.titulo, (v) => {
       n.titulo = v;
-      if (!guardados.has("n:" + n.id) && !n.__idManual) { n.id = idUnico(slug(v), D.noticias, n); sel.noticias = n.id; $("#form-noticia .ad-id").value = n.id; }
+      if (!guardados.has("n:" + n.id) && !n.__idManual) { n.id = idUnico(slug(v), D.noticias, n); sel.noticias = n.id; $("#form-noticia .ed-id").value = n.id; }
       $("#form-noticia h2").textContent = v || "Nueva noticia";
     }), null, true));
     g.appendChild(campoId(n, D.noticias, "n:", "título"));
@@ -410,12 +410,12 @@
     g.appendChild(cc);
     f.appendChild(g);
 
-    f.insertAdjacentHTML("beforeend", `<p class="ad-seccion">Foto (opcional)</p>`);
+    f.insertAdjacentHTML("beforeend", `<p class="ed-seccion">Foto (opcional)</p>`);
     f.appendChild(bloqueFoto(n, "noticias", false));
 
-    f.insertAdjacentHTML("beforeend", `<p class="ad-seccion">Contenido</p>`);
+    f.insertAdjacentHTML("beforeend", `<p class="ed-seccion">Contenido</p>`);
     const g2 = document.createElement("div");
-    g2.className = "ad-rejilla";
+    g2.className = "ed-rejilla";
     g2.appendChild(campo("Resumen", texto(n.resumen, (v) => { n.resumen = v; }, { area: true, repintar: false }),
       "Una o dos frases. Se ve en la tarjeta y al inicio de la noticia completa.", true));
     g2.querySelector("textarea").style.minHeight = "90px";
@@ -424,9 +424,9 @@
     }, { area: true, repintar: false }), "Separa los párrafos con una línea en blanco. Se lee en la ventana que se abre al hacer clic.", true));
     f.appendChild(g2);
 
-    f.insertAdjacentHTML("beforeend", `<p class="ad-seccion">Cursos relacionados (opcional)</p>`);
+    f.insertAdjacentHTML("beforeend", `<p class="ed-seccion">Cursos relacionados (opcional)</p>`);
     const ch = document.createElement("div");
-    ch.className = "ad-checks";
+    ch.className = "ed-checks";
     D.cursos.forEach((c) => {
       const l = document.createElement("label");
       l.innerHTML = `<input type="checkbox" ${(n.cursos || []).includes(c.id) ? "checked" : ""}> ${esc(c.titulo)}`;
@@ -439,9 +439,9 @@
     });
     f.appendChild(ch);
 
-    f.insertAdjacentHTML("beforeend", `<p class="ad-seccion">Botón con enlace (opcional)</p>`);
+    f.insertAdjacentHTML("beforeend", `<p class="ed-seccion">Botón con enlace (opcional)</p>`);
     const g3 = document.createElement("div");
-    g3.className = "ad-rejilla";
+    g3.className = "ed-rejilla";
     g3.appendChild(campo("Dirección", texto(n.enlace, (v, el) => { n.enlace = v.trim(); el.classList.toggle("invalido", !!n.enlace && !/^https?:\/\//.test(n.enlace)); }, { tipo: "url", placeholder: "https://…" }), "Por ejemplo, la nota completa en la web de la Universidad o un formulario.", true));
     g3.appendChild(campo("Texto del botón", texto(n.enlaceTexto, (v) => { n.enlaceTexto = v; }, { placeholder: "Más información" }), null, true));
     f.appendChild(g3);
@@ -488,14 +488,14 @@
       </ol>
       <p><a href="tutorial-token.html" target="_blank" rel="noopener"><b>Ver el tutorial paso a paso, con imágenes ↗</b></a></p>`;
     const g = document.createElement("div");
-    g.className = "ad-rejilla";
+    g.className = "ed-rejilla";
     [["owner", "Usuario u organización"], ["repo", "Repositorio"], ["branch", "Rama"], ["folder", "Carpeta dentro del repositorio (vacío = raíz)"]].forEach(([k, t]) => {
       g.appendChild(campo(t, texto(gh[k], (v) => { gh[k] = v.trim(); guardarGh(); modo(); }, { repintar: false })));
     });
     g.appendChild(campo("Token de GitHub", texto(gh.token, (v) => { gh.token = v.trim(); guardarGh(); modo(); }, { tipo: "password", placeholder: "github_pat_…", repintar: false }), null, true));
     f.appendChild(g);
     const r = document.createElement("label");
-    r.className = "ad-check";
+    r.className = "ed-check";
     r.innerHTML = `<input type="checkbox" ${recordar() ? "checked" : ""}> Recordar en este navegador (no lo actives en computadores compartidos)`;
     r.querySelector("input").addEventListener("change", (e) => {
       if (!LS) return;
@@ -690,10 +690,10 @@
     const nada = !nuevos.length && !cambiados.length && !profes.length;
     informe("Actualización desde el portal",
       (nada ? `<p>Listo: el sitio ya estaba al día con el portal. No hubo cambios.</p>` : `<p>Listo: los cambios del portal ya están publicados en el sitio (se verán en 1–2 minutos).</p>`) +
-      lista("Cursos nuevos", nuevos.map((c) => c.titulo), `<p class="ad-nota">Revisa su <b>área</b> (se propuso una automáticamente) y su foto.</p>`) +
+      lista("Cursos nuevos", nuevos.map((c) => c.titulo), `<p class="ed-nota">Revisa su <b>área</b> (se propuso una automáticamente) y su foto.</p>`) +
       lista("Cursos actualizados", cambiados.map((c) => c.titulo)) +
-      lista("Profesores nuevos", profes.map((p) => p.nombre), `<p class="ad-nota">Llegan sin foto ni cargo: complétalos en la pestaña Profesores.</p>`) +
-      `<p class="ad-nota"><a href="${esc(url)}" target="_blank" rel="noopener">Ver el detalle en GitHub ↗</a></p>`);
+      lista("Profesores nuevos", profes.map((p) => p.nombre), `<p class="ed-nota">Llegan sin foto ni cargo: complétalos en la pestaña Profesores.</p>`) +
+      `<p class="ed-nota"><a href="${esc(url)}" target="_blank" rel="noopener">Ver el detalle en GitHub ↗</a></p>`);
   }
 
   function informe(titulo, html) {
@@ -737,16 +737,16 @@
   let tAviso;
   function aviso(msg, error) {
     const t = $("#toast");
-    t.textContent = msg; t.className = "ad-toast" + (error ? " error" : ""); t.hidden = false;
+    t.textContent = msg; t.className = "ed-toast" + (error ? " error" : ""); t.hidden = false;
     clearTimeout(tAviso); tAviso = setTimeout(() => { t.hidden = true; }, 8000);
   }
 
   /* ---------- Pestañas y listas ---------- */
   function abrirPestana(tab) {
-    document.querySelectorAll(".ad-tabs [data-tab]").forEach((x) => x.setAttribute("aria-selected", x.dataset.tab === tab));
+    document.querySelectorAll(".ed-tabs [data-tab]").forEach((x) => x.setAttribute("aria-selected", x.dataset.tab === tab));
     ["cursos", "profes", "noticias", "github"].forEach((t) => { $("#tab-" + t).hidden = t !== tab; });
   }
-  document.querySelector(".ad-tabs").addEventListener("click", (e) => {
+  document.querySelector(".ed-tabs").addEventListener("click", (e) => {
     const b = e.target.closest("[data-tab]");
     if (b) abrirPestana(b.dataset.tab);
   });
